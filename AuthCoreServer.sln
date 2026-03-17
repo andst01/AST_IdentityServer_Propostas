@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36908.2
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthCoreServer.IdSrv", "AuthCoreServer.IdSrv\AuthCoreServer.IdSrv.csproj", "{B736E255-9296-43E6-BD8C-10E54C448684}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B736E255-9296-43E6-BD8C-10E54C448684}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B736E255-9296-43E6-BD8C-10E54C448684}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B736E255-9296-43E6-BD8C-10E54C448684}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B736E255-9296-43E6-BD8C-10E54C448684}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2C0091B1-930B-4033-B09B-C8FA7D23AA0D}
+	EndGlobalSection
+EndGlobal
