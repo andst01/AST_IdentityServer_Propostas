@@ -162,17 +162,49 @@ namespace IdentityServerHost.Quickstart.UI
         [HttpGet]
         public async Task<IActionResult> Logout(string logoutId)
         {
-            // build a model so the logout page knows what to display
+            #region Antigo
+
+            //// build a model so the logout page knows what to display
+            //var vm = await BuildLogoutViewModelAsync(logoutId);
+
+            //// força não mostrar tela
+            //vm.ShowLogoutPrompt = false;
+            //await HttpContext.SignOutAsync("idsrv");
+            //await HttpContext.SignOutAsync("idsrv.external");
+
+           
+
+            //if (vm.ShowLogoutPrompt == false)
+            //{
+            //    // if the request for logout was properly authenticated from IdentityServer, then
+            //    // we don't need to show the prompt and can just log the user out directly.
+            //    return await Logout(vm);
+            //}
+
+            //return View(vm);
+
+            #endregion
+
             var vm = await BuildLogoutViewModelAsync(logoutId);
 
-            if (vm.ShowLogoutPrompt == false)
+            // já faz logout direto SEM tela
+            // await HttpContext.SignOutAsync();
+            await HttpContext.SignOutAsync("idsrv");
+            await HttpContext.SignOutAsync("idsrv.external");
+            await _signInManager.SignOutAsync();
+
+            //return await Logout(vm);
+
+            // cria contexto de logout
+            var logout = await _interaction.GetLogoutContextAsync(logoutId);
+
+            // redireciona automaticamente
+            if (logout?.PostLogoutRedirectUri != null)
             {
-                // if the request for logout was properly authenticated from IdentityServer, then
-                // we don't need to show the prompt and can just log the user out directly.
-                return await Logout(vm);
+                return Redirect(logout.PostLogoutRedirectUri);
             }
 
-            return View(vm);
+            return Redirect("~/");
         }
 
         /// <summary>

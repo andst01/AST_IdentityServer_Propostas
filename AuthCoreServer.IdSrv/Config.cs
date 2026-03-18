@@ -22,12 +22,14 @@ namespace AuthCoreServer.IdSrv
             {
                 new ApiScope("scope1"),
                 new ApiScope("scope2"),
+                new ApiScope("api1", "Minha API")
+    
                // new ApiScope("openid"),
                // new ApiScope("profile"),
                //  new ApiScope("roles")
             };
 
-        
+
 
         public static IEnumerable<Client> Clients =>
             new Client[]
@@ -69,7 +71,7 @@ namespace AuthCoreServer.IdSrv
                     RequireClientSecret = false,
 
                     RedirectUris = { "https://localhost:7022/signin-oidc" },
-                    PostLogoutRedirectUris = { "https://localhost:7022/signout-callback-oid" },
+                    PostLogoutRedirectUris = { "https://localhost:7022/signout-callback-oidc" },
 
                     AllowedScopes =
                     {
@@ -78,7 +80,30 @@ namespace AuthCoreServer.IdSrv
                         "roles"
                     },
 
-                    AllowOfflineAccess = true
+                    AllowOfflineAccess = true,
+
+                    // MUITO IMPORTANTE
+                    AllowedCorsOrigins =
+                    {
+                        "https://localhost:7022"
+                    }
+                },
+
+                new Client
+                {
+                    ClientId = "react",
+                    AllowedGrantTypes = GrantTypes.Code,
+                    RequirePkce = true,
+                    RequireClientSecret = false,
+
+                    RedirectUris = { "https://localhost:5173/callback" },
+                    PostLogoutRedirectUris = { "https://localhost:5173" },
+
+                    AllowedCorsOrigins = { "https://localhost:5173" },
+
+                    AllowedScopes = { "openid", "profile", "roles", "api1" },
+
+                    AllowAccessTokensViaBrowser = true
                 }
             };
     }
