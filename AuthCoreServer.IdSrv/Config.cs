@@ -14,7 +14,7 @@ namespace AuthCoreServer.IdSrv
                    {
                 new IdentityResources.OpenId(),
                 new IdentityResources.Profile(),
-                new IdentityResource("roles", new [] { "role" })
+                new IdentityResource("roles", "Roles", new [] { "role" })
                    };
 
         public static IEnumerable<ApiScope> ApiScopes =>
