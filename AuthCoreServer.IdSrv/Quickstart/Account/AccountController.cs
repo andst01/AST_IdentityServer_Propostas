@@ -105,16 +105,16 @@ namespace IdentityServerHost.Quickstart.UI
 
             if (ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(model.Username, 
-                                                                      model.Password, 
-                                                                      model.RememberLogin, 
+                var result = await _signInManager.PasswordSignInAsync(model.Username,
+                                                                      model.Password,
+                                                                      model.RememberLogin,
                                                                       lockoutOnFailure: true);
                 if (result.Succeeded)
                 {
                     var user = await _userManager.FindByNameAsync(model.Username);
-                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, 
-                                                                        user.Id.ToString(), 
-                                                                        user.UserName, 
+                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName,
+                                                                        user.Id.ToString(),
+                                                                        user.UserName,
                                                                         clientId: context?.Client.ClientId));
 
                     if (context != null)
@@ -155,53 +155,88 @@ namespace IdentityServerHost.Quickstart.UI
             return View(vm);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ExternalLogout(string returnUrl)
+        {
 
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                await HttpContext.SignOutAsync();
+                await _signInManager.SignOutAsync();
+                await HttpContext.SignOutAsync("idsrv");
+                await HttpContext.SignOutAsync("idsrv.external");
+                await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+
+                var cookieOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None, 
+                    Path = "/"
+                };
+
+                Response.Cookies.Delete(".AspNetCore.Identity.Application", cookieOptions);
+                Response.Cookies.Delete("idsrv.session", cookieOptions);
+
+                
+                return Redirect(returnUrl);
+            }
+
+
+            return Redirect("/");
+
+        }
         /// <summary>
         /// Show logout page
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Logout(string logoutId)
         {
-            #region Antigo
-
-            //// build a model so the logout page knows what to display
-            //var vm = await BuildLogoutViewModelAsync(logoutId);
-
-            //// força não mostrar tela
-            //vm.ShowLogoutPrompt = false;
-            //await HttpContext.SignOutAsync("idsrv");
-            //await HttpContext.SignOutAsync("idsrv.external");
-
-           
-
-            //if (vm.ShowLogoutPrompt == false)
-            //{
-            //    // if the request for logout was properly authenticated from IdentityServer, then
-            //    // we don't need to show the prompt and can just log the user out directly.
-            //    return await Logout(vm);
-            //}
-
-            //return View(vm);
-
-            #endregion
 
             var vm = await BuildLogoutViewModelAsync(logoutId);
 
-            // já faz logout direto SEM tela
-            // await HttpContext.SignOutAsync();
-            await HttpContext.SignOutAsync("idsrv");
-            await HttpContext.SignOutAsync("idsrv.external");
-            await _signInManager.SignOutAsync();
-
-            //return await Logout(vm);
-
             // cria contexto de logout
             var logout = await _interaction.GetLogoutContextAsync(logoutId);
+
+            await _signInManager.SignOutAsync();
+
+            // Se você usa IdentityServer4 ou Duende, limpe o cookie principal também
+            await HttpContext.SignOutAsync();
 
             // redireciona automaticamente
             if (logout?.PostLogoutRedirectUri != null)
             {
                 return Redirect(logout.PostLogoutRedirectUri);
+            }
+            if (logout?.PostLogoutRedirectUri == null)
+            {
+                var client = await _clientStore.FindEnabledClientByIdAsync("react");
+
+                if (client != null && client?.PostLogoutRedirectUris != null)
+                {
+
+
+                    // 1. Comando oficial do Identity
+                    await _signInManager.SignOutAsync();
+                    await HttpContext.SignOutAsync("idsrv");
+                    await HttpContext.SignOutAsync("idsrv.external");
+                    await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+
+                    // 2. REMOÇÃO MANUAL DOS COOKIES (O pulo do gato)
+                    // Precisamos garantir que o domínio e o path batam exatamente
+                    var cookieOptions = new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.None, // Importante para cross-origin (5001 -> 5173)
+                        Path = "/"
+                    };
+
+                    Response.Cookies.Delete(".AspNetCore.Identity.Application", cookieOptions);
+                    Response.Cookies.Delete("idsrv.session", cookieOptions);
+
+                    return Redirect(client.PostLogoutRedirectUris.First());
+                }
             }
 
             return Redirect("~/");
@@ -216,6 +251,8 @@ namespace IdentityServerHost.Quickstart.UI
         {
             // build a model so the logged out page knows what to display
             var vm = await BuildLoggedOutViewModelAsync(model.LogoutId);
+
+            var logout = await _interaction.GetLogoutContextAsync(model.LogoutId);
 
             if (User?.Identity.IsAuthenticated == true)
             {

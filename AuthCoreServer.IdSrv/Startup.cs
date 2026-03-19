@@ -5,6 +5,7 @@ using IdentityServer4;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -65,9 +66,15 @@ namespace AuthCoreServer.IdSrv
                     options.ClientId = "copy client ID from Google here";
                     options.ClientSecret = "copy client secret from Google here";
                 });
-           
 
-            
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.Cookie.Name = ".AspNetCore.Identity.Application";
+                options.Cookie.SameSite = SameSiteMode.None; // Obrigatório para Cross-Origin
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Obrigatório para SameSite=None
+            });
+
+
         }
 
         public void Configure(IApplicationBuilder app)
