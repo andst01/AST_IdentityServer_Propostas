@@ -2,19 +2,32 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using System.Collections.Generic;
 using IdentityServer4.Models;
+using System.Collections.Generic;
+using static IdentityServer4.Models.IdentityResources;
 
 namespace AuthCoreServer.IdSrv
 {
     public static class Config
     {
+        public static IEnumerable<ApiResource> ApiResources =>
+            new ApiResource[]
+            {
+                // Aqui definimos que "api1" é um recurso físico (sua API)
+                new ApiResource("api1", "Minha API")
+                {
+                    Scopes = { "api1" }, // Vincula ao ApiScope definido abaixo
+                    UserClaims = { "role", "name" }
+                }
+            };
+
         public static IEnumerable<IdentityResource> IdentityResources =>
                    new IdentityResource[]
                    {
                 new IdentityResources.OpenId(),
                 new IdentityResources.Profile(),
-                new IdentityResource("roles", "Roles", new [] { "role" })
+                new IdentityResource("roles", "Roles", new [] { "role" }),
+
                    };
 
         public static IEnumerable<ApiScope> ApiScopes =>
@@ -22,7 +35,10 @@ namespace AuthCoreServer.IdSrv
             {
                 new ApiScope("scope1"),
                 new ApiScope("scope2"),
-                new ApiScope("api1", "Minha API")
+                new ApiScope("api1", "Minha API"),
+                //new ApiScope("apolice.api", "API Apolice"),
+                //new ApiScope("cliente.api", "API Cliente"),
+                //new ApiScope("proposta.api", "API Proposta")
     
                // new ApiScope("openid"),
                // new ApiScope("profile"),
@@ -98,13 +114,29 @@ namespace AuthCoreServer.IdSrv
 
                     RedirectUris = { "https://localhost:5173/callback" },
                     PostLogoutRedirectUris = { "https://localhost:5173" },
-                    
+
 
                     AllowedCorsOrigins = { "https://localhost:5173" },
 
-                    AllowedScopes = { "openid", "profile", "roles", "api1" },
+                    AllowedScopes = {
+                        "openid",
+                        "profile",
+                        "roles",
+                        "api1"
+
+                    },
 
                     AllowAccessTokensViaBrowser = true
+                },
+
+                new Client
+                {
+                    ClientId = "postman",
+                    ClientSecrets = { new Secret("secret".Sha256()) },
+
+                    AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
+
+                    AllowedScopes = { "api1", "openid", "profile" }
                 }
             };
     }
