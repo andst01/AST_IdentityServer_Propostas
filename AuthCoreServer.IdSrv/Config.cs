@@ -93,7 +93,8 @@ namespace AuthCoreServer.IdSrv
                     {
                         "openid",
                         "profile",
-                        "roles"
+                        "roles",
+                        "api1"
                     },
 
                     AllowOfflineAccess = true,
