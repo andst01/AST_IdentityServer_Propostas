@@ -129,7 +129,30 @@ namespace AuthCoreServer.IdSrv
 
                     AllowAccessTokensViaBrowser = true
                 },
+                 new Client
+                {
+                    ClientId = "angular",
+                    AllowedGrantTypes = GrantTypes.Code,
+                    RequirePkce = true,
+                    RequireClientSecret = false,
 
+                    RedirectUris = { "http://localhost:4200" },
+                    PostLogoutRedirectUris = { "http://localhost:4200" },
+
+                    AllowOfflineAccess = true,
+                    AllowedCorsOrigins = { "http://localhost:4200" },
+
+                    AllowedScopes = {
+                        "openid",
+                        "profile",
+                        "roles",
+                        "offline_access",
+                        "api1"
+
+                    },
+
+                    AllowAccessTokensViaBrowser = true
+                },
                 new Client
                 {
                     ClientId = "postman",
