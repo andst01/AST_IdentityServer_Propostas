@@ -136,7 +136,7 @@ namespace AuthCoreServer.IdSrv
                     RequirePkce = true,
                     RequireClientSecret = false,
 
-                    RedirectUris = { "http://localhost:4200" },
+                    RedirectUris = { "http://localhost:4200/auth-callback" },
                     PostLogoutRedirectUris = { "http://localhost:4200" },
 
                     AllowOfflineAccess = true,
