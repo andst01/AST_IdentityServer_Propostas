@@ -176,8 +176,12 @@ namespace IdentityServerHost.Quickstart.UI
                     Path = "/"
                 };
 
-                Response.Cookies.Delete(".AspNetCore.Identity.Application", cookieOptions);
-                Response.Cookies.Delete("idsrv.session", cookieOptions);
+                foreach(var cookie in Request.Cookies.Keys)
+                {
+                    Response.Cookies.Delete(cookie, cookieOptions);
+                }
+               // Response.Cookies.Delete(".AspNetCore.Identity.Application", cookieOptions);
+               // Response.Cookies.Delete("idsrv.session", cookieOptions);
 
                 
                 return Redirect(returnUrl);

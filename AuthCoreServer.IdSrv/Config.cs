@@ -151,7 +151,7 @@ namespace AuthCoreServer.IdSrv
 
                     },
 
-                    AllowAccessTokensViaBrowser = true
+                    AllowAccessTokensViaBrowser = false
                 },
                 new Client
                 {

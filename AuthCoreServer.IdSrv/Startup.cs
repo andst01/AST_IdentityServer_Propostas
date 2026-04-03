@@ -27,6 +27,17 @@ namespace AuthCoreServer.IdSrv
 
         public void ConfigureServices(IServiceCollection services)
         {
+            //services.AddCors(options =>
+            //{
+            //    options.AddPolicy("AllowAll", builder =>
+            //    {
+            //        builder.WithOrigins("http://localhost:4200") // URL do seu Angular
+            //               .AllowAnyHeader()
+            //               .AllowAnyMethod()
+            //               .AllowCredentials(); // Importante para OIDC
+            //    });
+            //});
+
             services.AddControllersWithViews();
             services.AddDataBaseConfiguration(Configuration);
 
@@ -77,6 +88,8 @@ namespace AuthCoreServer.IdSrv
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Obrigatório para SameSite=None
             });
 
+            //services.AddCookiePolicy
+
 
         }
 
@@ -91,6 +104,7 @@ namespace AuthCoreServer.IdSrv
             app.UseStaticFiles();
 
             app.UseRouting();
+           // app.UseCors("AllowAll");
             app.UseIdentityServer();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
