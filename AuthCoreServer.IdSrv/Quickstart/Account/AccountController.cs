@@ -2,11 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using AuthCoreServer.IdSrv.Entidades;
 using AuthCoreServer.IdSrv.Models;
+using AuthCoreServer.IdSrv.Quickstart.Account;
 using IdentityModel;
 using IdentityServer4.Events;
 using IdentityServer4.Extensions;
@@ -18,6 +16,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using QRCoder;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace IdentityServerHost.Quickstart.UI
 {
@@ -73,7 +75,7 @@ namespace IdentityServerHost.Quickstart.UI
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginInputModel model, string button)
         {
-            
+
             // check if we are in the context of an authorization request
             var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
 
@@ -110,6 +112,15 @@ namespace IdentityServerHost.Quickstart.UI
                                                                       model.Password,
                                                                       model.RememberLogin,
                                                                       lockoutOnFailure: true);
+                if (result.RequiresTwoFactor)
+                {
+                    return RedirectToAction("LoginWith2fa", new
+                    {
+                        model.ReturnUrl,
+                        model.RememberLogin
+                    });
+                }
+
                 if (result.Succeeded)
                 {
                     var user = await _userManager.FindByNameAsync(model.Username);
@@ -117,6 +128,16 @@ namespace IdentityServerHost.Quickstart.UI
                                                                         user.Id.ToString(),
                                                                         user.UserName,
                                                                         clientId: context?.Client.ClientId));
+
+                    if (!user.TwoFactorEnabled)
+                    {
+                       
+                        return RedirectToAction("EnableAuthenticator", new
+                        {
+                            returnUrl = model.ReturnUrl,
+                            rememberMe = true
+                        });
+                    }
 
                     if (context != null)
                     {
@@ -172,18 +193,18 @@ namespace IdentityServerHost.Quickstart.UI
                 {
                     HttpOnly = true,
                     Secure = true,
-                    SameSite = SameSiteMode.None, 
+                    SameSite = SameSiteMode.None,
                     Path = "/"
                 };
 
-                foreach(var cookie in Request.Cookies.Keys)
+                foreach (var cookie in Request.Cookies.Keys)
                 {
                     Response.Cookies.Delete(cookie, cookieOptions);
                 }
-               // Response.Cookies.Delete(".AspNetCore.Identity.Application", cookieOptions);
-               // Response.Cookies.Delete("idsrv.session", cookieOptions);
+                // Response.Cookies.Delete(".AspNetCore.Identity.Application", cookieOptions);
+                // Response.Cookies.Delete("idsrv.session", cookieOptions);
 
-                
+
                 return Redirect(returnUrl);
             }
 
@@ -420,5 +441,189 @@ namespace IdentityServerHost.Quickstart.UI
 
             return vm;
         }
+
+        #region MFA
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> EnableAuthenticator(string returnUrl = null, bool rememberMe = false)
+        {
+
+            var user = await _userManager.GetUserAsync(User);
+
+            var key = await _userManager.GetAuthenticatorKeyAsync(user);
+
+            if (string.IsNullOrEmpty(key))
+            {
+                await _userManager.ResetAuthenticatorKeyAsync(user);
+                key = await _userManager.GetAuthenticatorKeyAsync(user);
+            }
+
+            var authUri = GenerateQrCodeUri(user.Email, key);
+
+            var model = new EnableAuthenticatorViewModel
+            {
+                SharedKey = key,
+                AuthenticatorUri = authUri,
+                QrCodeImageSource = GenerateQrCodeImage(authUri),
+                ReturnUrl = returnUrl,
+                
+            };
+
+            return View(model);
+
+            //var model = new EnableAuthenticatorViewModel
+            //{
+            //    SharedKey = key,
+            //    AuthenticatorUri = GenerateQrCodeUri(user.Email, key)
+            //};
+
+            //return View(model);
+        }
+
+        private string GenerateQrCodeUri(string email, string unformattedKey)
+        {
+
+            return string.Format(
+                "otpauth://totp/{0}:{1}?secret={2}&issuer={0}&digits=6",
+                "SeuApp",
+                email,
+                unformattedKey);
+        }
+
+        private string GenerateQrCodeImage(string authenticatorUri)
+        {
+            #region antigo
+            //using (var qrGenerator = new QRCodeGenerator())
+            //{
+            //    // Cria os dados do QR Code com nível de correção 'Q' (25% de perda aceitável)
+            //    using (var qrCodeData = qrGenerator.CreateQrCode(authenticatorUri, QRCodeGenerator.ECCLevel.Q))
+            //    {
+            //        // Gera a imagem em formato de bytes PNG
+            //        using (var qrCode = new PngByteQRCode(qrCodeData))
+            //        {
+            //            byte[] qrCodeBytes = qrCode.GetGraphic(20);
+
+            //            // Converte para Base64 para ser exibido diretamente na tag <img> do HTML
+            //            return string.Format("data:image/png;base64,{0}", Convert.ToBase64String(qrCodeBytes));
+            //        }
+
+
+            //    }
+            //}
+
+            #endregion
+
+            string QrCodeImageSource = "";
+            using (var qrGenerator = new QRCodeGenerator())
+            {
+                // Nível Q é ótimo para garantir leitura mesmo com sujeira/tamanho pequeno
+                var qrCodeData = qrGenerator.CreateQrCode(authenticatorUri, QRCodeGenerator.ECCLevel.Q);
+                var qrCode = new PngByteQRCode(qrCodeData);
+
+                // Mude de 20 para 4. Isso gera uma imagem de aprox. 200x200px dependendo da URL
+                byte[] qrCodeBytes = qrCode.GetGraphic(4);
+
+                // Retorne a string pura (o prefixo colocaremos na View para ficar mais limpo)
+                return  string.Format("data:image/png;base64,{0}", Convert.ToBase64String(qrCodeBytes));
+            }
+
+
+        }
+
+        public async Task<IActionResult> EnableAuthenticator(EnableAuthenticatorViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var verificationCode = model.Code.Replace(" ", "").Replace("-", "");
+
+            var isValid = await _userManager.VerifyTwoFactorTokenAsync(
+                user,
+                _userManager.Options.Tokens.AuthenticatorTokenProvider,
+                verificationCode);
+
+            if (!isValid)
+            {
+                ModelState.AddModelError("Code", "Código inválido");
+                return View(model);
+            }
+
+            await _userManager.SetTwoFactorEnabledAsync(user, true);
+
+            await _signInManager.SignOutAsync();
+
+            // Redireciona para o login passando o ReturnUrl original
+            return RedirectToAction("Login", new { ReturnUrl = model.ReturnUrl });
+
+           // return RedirectToAction("Index", "Home");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> LoginWith2fa(bool rememberMe, string returnUrl)
+        {
+            var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+
+            if (user == null)
+                throw new Exception("Usuário inválido");
+
+            return View(new LoginWith2faViewModel
+            {
+                ReturnUrl = returnUrl,
+                RememberMe = rememberMe
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoginWith2fa(LoginWith2faViewModel model)
+        {
+            /* var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+
+             var code = model.TwoFactorCode.Replace(" ", "").Replace("-", "");
+
+             var result = await _signInManager.TwoFactorAuthenticatorSignInAsync(
+                 code,
+                 model.RememberMe,
+                 rememberClient: false);
+
+             if (result.Succeeded)
+             {
+                 return Redirect(model.ReturnUrl);
+             }
+
+             ModelState.AddModelError("", "Código inválido");
+             return View(model); */
+
+            // 1. Busca o usuário que está no meio do processo de 2FA (via cookie temporário)
+            var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
+            if (user == null)
+            {
+                return RedirectToAction("Login"); // Ou lance uma exceção apropriada
+            }
+
+            var code = model.TwoFactorCode.Replace(" ", "").Replace("-", "");
+
+            // 2. IMPORTANTE: Use model.RememberMachine para que o checkbox da View funcione
+            var result = await _signInManager.TwoFactorAuthenticatorSignInAsync(
+                code,
+                model.RememberMe,
+                model.RememberMachine);
+
+            if (result.Succeeded)
+            {
+                return Redirect(model.ReturnUrl);
+            }
+
+            // 3. Verificação de conta bloqueada (opcional, mas boa prática)
+            if (result.IsLockedOut)
+            {
+                return RedirectToAction("Lockout");
+            }
+
+            ModelState.AddModelError(string.Empty, "Código inválido.");
+            return View(model);
+        }
+
+        #endregion
     }
 }

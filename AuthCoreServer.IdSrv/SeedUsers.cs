@@ -8,34 +8,34 @@ public static class SeedUsers
     public static async Task SeedAsync(UserManager<Usuario> userManager)
     {
 
-        for (int i = 0; i <= 1; i++)
-        {
+        //for (int i = 0; i <= 1; i++)
+        //{
             string userName = "";
             string email = "";
             string userNameLeitor = "";
             string emailLeitor = "";
 
-            if (i == 0)
-            {
-                userName = "Alice";
-                email = "alice@teste.com.br";
+            //if (i == 0)
+            //{
+                userName = "anderson";
+                email = "anderson@teste.com.br";
 
-                userNameLeitor = "Paulo";
-                emailLeitor = "paulo@teste.com.br";
+                //userNameLeitor = "Paulo";
+                //emailLeitor = "paulo@teste.com.br";
 
-            }
-            else
-            {
-                userName = "Marta";
-                email = "marta@teste.com.br";
+            //}
+            //else
+            //{
+            //    userName = "Marta";
+            //    email = "marta@teste.com.br";
 
-                userNameLeitor = "Pedro";
-                emailLeitor = "pedro@teste.com.br";
-            }
+            //    userNameLeitor = "Pedro";
+            //    emailLeitor = "pedro@teste.com.br";
+            //}
 
             await CreateUserAdmin(userManager, userName, email);
-            await CreateUserLeitos(userManager, userNameLeitor, emailLeitor);
-        }
+          //  await CreateUserLeitos(userManager, userNameLeitor, emailLeitor);
+        //}
 
        
     }
@@ -54,12 +54,12 @@ public static class SeedUsers
                 UserName = userName,
                 Email = email,
                 EmailConfirmed = true,
-                Password = "Colab@123"
+                Password = "Admin@123"
             };
 
-            await userManager.CreateAsync(admin, "Colab@123");
+            await userManager.CreateAsync(admin, "Admin@123");
 
-            var resultRoles = await userManager.AddToRoleAsync(admin, "Colaborador");
+            var resultRoles = await userManager.AddToRoleAsync(admin, "Admin");
 
             if (!resultRoles.Succeeded)
             {

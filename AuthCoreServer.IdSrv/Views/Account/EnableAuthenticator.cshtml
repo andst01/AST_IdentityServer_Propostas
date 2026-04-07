@@ -1,0 +1,53 @@
+﻿@using AuthCoreServer.IdSrv.Quickstart.Account
+@model EnableAuthenticatorViewModel
+
+<h2>Configurar Autenticador</h2>
+
+<p>
+    Use um aplicativo autenticador como <strong>Google Authenticator</strong> ou <strong>Microsoft Authenticator</strong>
+    para escanear o QR Code abaixo.
+</p>
+
+<div style="margin: 20px 0;">
+    <img src="@Model.QrCodeImageSource" width="200" height="200" style="border: 1px solid #ccc; padding: 10px;" />
+</div>
+
+<p>
+    Caso não consiga escanear, insira manualmente esta chave no seu aplicativo:
+</p>
+
+<div class="alert alert-info" style="font-family: monospace; font-size: 1.2em; letter-spacing: 2px;">
+    @Model.SharedKey
+</div>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="EnableAuthenticator" method="post">
+            @* É importante manter o AuthenticatorUri e SharedKey no form se 
+               você precisar deles em caso de erro de validação (ModelState Invalid) *@
+            <input type="hidden" asp-for="AuthenticatorUri" />
+            <input type="hidden" asp-for="SharedKey" />
+            <input type="hidden" asp-for="QrCodeImageSource" />
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <div class="form-group">
+                <label asp-for="Code">Código de Verificação</label>
+                <input asp-for="Code" class="form-control" autocomplete="off" placeholder="Ex: 123456" />
+                <span asp-validation-for="Code" class="text-danger"></span>
+            </div>
+
+            <br />
+
+            <button type="submit" class="btn btn-primary">
+                Verificar e Ativar
+            </button>
+            <a asp-action="Index" asp-controller="Home" class="btn btn-default">Cancelar</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

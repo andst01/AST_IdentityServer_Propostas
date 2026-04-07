@@ -95,6 +95,13 @@ namespace AuthCoreServer.IdSrv
 
         public void Configure(IApplicationBuilder app)
         {
+            app.Use(async (context, next) =>
+            {
+                // Adiciona "data:" na lista de fontes permitidas para imagens (img-src)
+                context.Response.Headers.Add("Content-Security-Policy", "img-src 'self' data:;");
+                await next();
+            });
+
             if (Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -103,6 +110,7 @@ namespace AuthCoreServer.IdSrv
 
             app.UseStaticFiles();
 
+           
             app.UseRouting();
            // app.UseCors("AllowAll");
             app.UseIdentityServer();

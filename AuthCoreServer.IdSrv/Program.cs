@@ -67,8 +67,8 @@ namespace AuthCoreServer.IdSrv
 
                 //using (var scope = app.Services.CreateScope())
                 //{
-                //    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Funcao>>();
-                //    await SeedRoles.SeedAsync(roleManager);
+                //    //var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Funcao>>();
+                //    //await SeedRoles.SeedAsync(roleManager);
 
                 //    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
                 //    await SeedUsers.SeedAsync(userManager);
